@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <cmath>
+#include <cfloat>
 
 using Matrix = std::vector<std::vector<float>>;
 
@@ -113,14 +115,14 @@ std::vector<float> jacob(Matrix& a, std::vector<float>& b, int iters) {
 	std::printf("D^-1*B:\n");
 	print(db);
 	for (int it = 0; it < iters; it++) {
-		//x_i+1 = -(d * LU) * x_i + d*b
-		std::vector<float> tempx = x;
+		std::vector<float> tempx(n, 0.f);
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < n; j++) {
-				x[i] += dlu[i][j] * tempx[i];
+				tempx[i] += dlu[i][j] * x[j];
 			}
-			x[i] += db[i];
+			tempx[i] += db[i];
 		}
+    x = tempx;
 	}
 	return x;
 }
