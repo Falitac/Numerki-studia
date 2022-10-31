@@ -7,6 +7,7 @@
 using Matrix = std::vector<std::vector<float>>;
 
 // Klasa pomocnicza do reprezentacji macierzy. 
+// TODO implent this shit
 namespace fil {
 	class Matrix {
 	public:
@@ -27,14 +28,14 @@ namespace fil {
 
 void print(std::vector<float>& a) {
 	for (int i = 0; i < a.size(); i++) {
-		std::printf("[%d]: %5.2f\n", i, a[i]);
+		std::printf("[%d]: %6.3g\n", i, a[i]);
 	}
 }
 
 void print(Matrix& a) {
 	for (int i = 0; i < a.size(); i++) {
 		for (int j = 0; j < a[i].size(); j++) {
-			std::printf("%5.2f ", a[i][j]);
+			std::printf("%6.3g ", a[i][j]);
 		}
 		std::printf("\n");
 	}
@@ -46,18 +47,19 @@ bool isWeakDominant(Matrix& a) {
 	for (int i = 0; i < n; i++) {
 		float sum = 0.f;
 		for (int j = 0; j < n; j++) {
-			if (i == 0) continue;
+			if (i == j) continue;
 			sum += std::fabs(a[i][j]);
 		}
-		if (sum > std::fabs(a[i][i])) {
+
+		if (std::fabs(a[i][i]) < sum) {
 			return false;
-		}
-		if (sum > std::fabs(a[i][i])) {
+		} else {
 			good = true;
 		}
 	}
 	return good;
 }
+
 void gaussEliminateToUpper(Matrix& a, std::vector<float>& b) {
 	int n = a.size();
 	for (int i = 0; i < n - 1; i++) {
@@ -95,10 +97,6 @@ std::vector<float> jacob(Matrix& a, std::vector<float>& b, int iters) {
 		d[i] = 1 / a[i][i];
 		LU[i][i] = 0.f;
 	}
-	std::printf("D:\n");
-	print(d);
-	std::printf("LU:\n");
-	print(LU);
 
 	Matrix dlu = std::vector<std::vector<float>>(n, std::vector<float>(n, 0.0f));
 	for (int i = 0; i < n; i++) {
@@ -106,14 +104,10 @@ std::vector<float> jacob(Matrix& a, std::vector<float>& b, int iters) {
 			dlu[i][j] = -d[i] * LU[i][j];
 		}
 	}
-	std::printf("DLU:\n");
-	print(dlu);
 	std::vector<float> db = b;
 	for (int i = 0; i < n; i++) {
 		db[i] *= d[i];
 	}
-	std::printf("D^-1*B:\n");
-	print(db);
 	for (int it = 0; it < iters; it++) {
 		std::vector<float> tempx(n, 0.f);
 		for (int i = 0; i < n; i++) {
@@ -125,6 +119,9 @@ std::vector<float> jacob(Matrix& a, std::vector<float>& b, int iters) {
     x = tempx;
 	}
 	return x;
+}
+
+void loadMatrix() {
 }
 
 int main() {
@@ -157,12 +154,10 @@ int main() {
 
 	//gaussEliminateToUpper(m, b);
 	//auto x = solveUpper(m, b);
-	auto x = jacob(m, b, 5);
-
-	std::puts("Macierz U:");
-	print(m);
-	std::printf("Wektor wyr. wolnych:\n");
-	print(b);
+  int iters = 1;
+  puts("Podaj ilość iteracji:\n");
+  std::cin >> iters;
+	auto x = jacob(m, b, iters);
 	std::printf("Wynik:\n");
 	print(x);
 }
