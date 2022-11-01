@@ -2,11 +2,11 @@
 #include <vector>
 #include <fstream>
 #include <cmath>
+#include <tuple>
 #include <cfloat>
 
 
 // Klasa pomocnicza do reprezentacji macierzy. 
-// TODO implent this shit
 class Matrix {
 public:
 	Matrix(size_t row, size_t col, float val = 0.f)
@@ -60,9 +60,30 @@ bool isWeakDominant(Matrix& a) {
 	return good;
 }
 
+int pivotOnDiagonal(Matrix& a, std::vector<float>& b, int diagonal) {
+  int highest = diagonal;
+  float maxVal = std::fabs(a[diagonal][diagonal]);
+  for(int i = diagonal + 1; i < a.getRow(); i++) {
+    auto absVal = std::fabs(a[i][diagonal]);
+    if(absVal > maxVal) {
+      maxVal = absVal;
+      highest = i;
+    }
+  }
+  return highest;
+}
+
+void swapRows(Matrix& a, std::vector<float>& b, int rowIndex1, int rowIndex2) {
+  if(rowIndex1 == rowIndex2) return;
+  std::swap(b[rowIndex1], b[rowIndex2]);
+  std::swap_ranges(a[rowIndex1], a[rowIndex1] + a.getCol(), a[rowIndex2]);
+}
+
 void gaussEliminateToUpper(Matrix& a, std::vector<float>& b) {
 	int n = a.getRow();
 	for (int i = 0; i < n - 1; i++) {
+    int highest = pivotOnDiagonal(a, b, i);
+    swapRows(a, b, i, highest);
 		for (int j = i + 1; j < n; j++) {
 			float m = a[j][i] / a[i][i];
 			b[j] -= b[i] * m;
@@ -100,7 +121,7 @@ std::vector<float> solveByJacobi(Matrix a, std::vector<float> b, int iters) {
   
   std::puts("Macierz L+U:");
   print(a);
-  std::puts("Macierz odwrotna diagonalna D^-1 (z pominięciem zer spoza diagonali, dla wydajności)");
+  std::puts("Macierz odwrotna diagonalna D^(-1):\n(reprezentacja w wektorze)");
   print(d);
 
 	for (int i = 0; i < n; i++) {
@@ -181,5 +202,6 @@ void jacobi() {
 
 int main() {
   gauss();
-  //jacobi();
+  jacobi();
 }
+
