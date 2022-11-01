@@ -4,45 +4,45 @@
 #include <cmath>
 #include <cfloat>
 
-using Matrix = std::vector<std::vector<float>>;
 
 // Klasa pomocnicza do reprezentacji macierzy. 
 // TODO implent this shit
-namespace fil {
-	class Matrix {
-	public:
-		Matrix(size_t row, size_t col, float val = 0.f)
-		: data(row * col, val)
-		, row(row)
-		, col(col) {
-		}
-		float* operator[](size_t n) {
-			return &data[n * col];
-		}
-	private:
-		size_t row;
-		size_t col;
-		std::vector<float> data;
-	};
-}
+class Matrix {
+public:
+	Matrix(size_t row, size_t col, float val = 0.f)
+	: row(row)
+	, col(col)
+	, data(row * col, val) {
+	}
+
+	float* operator[](size_t n) {
+		return &data[n * col];
+	}
+	size_t getRow() const { return row; };
+	size_t getCol() const { return col; };
+private:
+	size_t row;
+	size_t col;
+	std::vector<float> data;
+};
 
 void print(std::vector<float>& a) {
 	for (int i = 0; i < a.size(); i++) {
-		std::printf("[%d]: %6.3g\n", i, a[i]);
+		std::printf("[%d]: %6.4g\n", i, a[i]);
 	}
 }
 
 void print(Matrix& a) {
-	for (int i = 0; i < a.size(); i++) {
-		for (int j = 0; j < a[i].size(); j++) {
-			std::printf("%6.3g ", a[i][j]);
+	for (int i = 0; i < a.getRow(); i++) {
+		for (int j = 0; j < a.getCol(); j++) {
+			std::printf("%6.4g ", a[i][j]);
 		}
 		std::printf("\n");
 	}
 }
 
 bool isWeakDominant(Matrix& a) {
-	int n = a.size();
+	int n = a.getRow();
 	bool good = false;
 	for (int i = 0; i < n; i++) {
 		float sum = 0.f;
@@ -61,7 +61,7 @@ bool isWeakDominant(Matrix& a) {
 }
 
 void gaussEliminateToUpper(Matrix& a, std::vector<float>& b) {
-	int n = a.size();
+	int n = a.getRow();
 	for (int i = 0; i < n - 1; i++) {
 		for (int j = i + 1; j < n; j++) {
 			float m = a[j][i] / a[i][i];
@@ -75,7 +75,7 @@ void gaussEliminateToUpper(Matrix& a, std::vector<float>& b) {
 
 // obliczanie zmiennych:
 std::vector<float> solveUpper(Matrix& a, std::vector<float>& b) {
-	int n = a.size();
+	int n = a.getRow();
 	std::vector<float> x(n);
 
 	for (int i = n - 1; i >= 0; i--) {
@@ -88,65 +88,82 @@ std::vector<float> solveUpper(Matrix& a, std::vector<float>& b) {
 	return x;
 }
 
-std::vector<float> jacob(Matrix& a, std::vector<float>& b, int iters) {
-	int n = a.size();
-	Matrix LU = a;
+std::vector<float> solveByJacobi(Matrix a, std::vector<float> b, int iters) {
+	int n = a.getRow();
 	std::vector<float> x(n, 0.f);
+
 	std::vector<float> d(n);
 	for (int i = 0; i < n; i++) {
 		d[i] = 1 / a[i][i];
-		LU[i][i] = 0.f;
+		a[i][i] = 0.f;
 	}
+  
+  std::puts("Macierz L+U:");
+  print(a);
+  std::puts("Macierz odwrotna diagonalna D^-1 (z pominięciem zer spoza diagonali, dla wydajności)");
+  print(d);
 
-	Matrix dlu = std::vector<std::vector<float>>(n, std::vector<float>(n, 0.0f));
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < n; j++) {
-			dlu[i][j] = -d[i] * LU[i][j];
+			a[i][j] = -d[i] * a[i][j];
 		}
-	}
-	std::vector<float> db = b;
-	for (int i = 0; i < n; i++) {
-		db[i] *= d[i];
+		b[i] *= d[i];
 	}
 	for (int it = 0; it < iters; it++) {
 		std::vector<float> tempx(n, 0.f);
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < n; j++) {
-				tempx[i] += dlu[i][j] * x[j];
+				tempx[i] += a[i][j] * x[j];
 			}
-			tempx[i] += db[i];
+			tempx[i] += b[i];
 		}
     x = tempx;
 	}
 	return x;
 }
 
-void loadMatrix() {
-}
-
-int main() {
-	std::fstream input("test2.txt");
+std::pair<Matrix, std::vector<float>> loadMatrixWithVector(const std::string& fileName) {
+	std::fstream input(fileName);
 	if (!input.good()) {
-		std::printf("nope\n");
-		return 1;
+		std::printf("Nope, problem z plikiem\n");
+    std::exit(1);
 	}
+
 	int n;
 	input >> n;
-	Matrix m = std::vector<std::vector<float>>(n, std::vector<float>(n, 0.0f));
-
+	Matrix m(n, n);
 	std::vector<float> b(n);
+
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < n; j++) {
 			input >> m[i][j];
 			if (i == j && std::fabs(m[i][j]) < FLT_EPSILON) {
 				std::printf("Error matrix 0. at [%d][%d]\n", i, i);
-				return 1;
+        std::exit(1);
 			}
 		}
 		input >> b[i];
 	}
+  return {m, b};
+}
 
-	std::printf("Macierz [%i][%i]:\n", n, n);
+void gauss() {
+  auto [m, b] = loadMatrixWithVector("test3.txt");
+	std::printf("Macierz %ix%i:\n", m.getRow(), m.getRow());
+	print(m);
+	std::printf("Wektor wyr. wolnych:\n");
+	print(b);
+
+  gaussEliminateToUpper(m, b);
+  auto x = solveUpper(m, b);
+	std::printf("Wynik:\n");
+	print(x);
+}
+
+void jacobi() {
+  auto [m, b] = loadMatrixWithVector("test2.txt");
+
+	std::printf("Macierz %ix%i:\n", m.getRow(), m.getRow());
 	print(m);
 	std::printf("Wektor wyr. wolnych:\n");
 	print(b);
@@ -154,10 +171,15 @@ int main() {
 
 	//gaussEliminateToUpper(m, b);
 	//auto x = solveUpper(m, b);
-  int iters = 1;
-  puts("Podaj ilość iteracji:\n");
-  std::cin >> iters;
-	auto x = jacob(m, b, iters);
+	int iters = 1;
+	puts("Podaj ilość iteracji:\n");
+	std::cin >> iters;
+	auto x = solveByJacobi(m, b, iters);
 	std::printf("Wynik:\n");
 	print(x);
+}
+
+int main() {
+  gauss();
+  //jacobi();
 }
