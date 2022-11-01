@@ -2,7 +2,6 @@
 #include <vector>
 #include <fstream>
 #include <cmath>
-#include <tuple>
 #include <cfloat>
 
 
@@ -18,8 +17,8 @@ public:
 	float* operator[](size_t n) {
 		return &data[n * col];
 	}
-	size_t getRow() const { return row; };
-	size_t getCol() const { return col; };
+	size_t rowSize() const { return row; };
+	size_t colSize() const { return col; };
 private:
 	size_t row;
 	size_t col;
@@ -28,21 +27,21 @@ private:
 
 void print(std::vector<float>& a) {
 	for (int i = 0; i < a.size(); i++) {
-		std::printf("[%d]: %6.4g\n", i, a[i]);
+		std::printf("[%d]: %6.5g\n", i, a[i]);
 	}
 }
 
 void print(Matrix& a) {
-	for (int i = 0; i < a.getRow(); i++) {
-		for (int j = 0; j < a.getCol(); j++) {
-			std::printf("%6.4g ", a[i][j]);
+	for (int i = 0; i < a.rowSize(); i++) {
+		for (int j = 0; j < a.colSize(); j++) {
+			std::printf("%6.5g ", a[i][j]);
 		}
 		std::printf("\n");
 	}
 }
 
 bool isWeakDominant(Matrix& a) {
-	int n = a.getRow();
+	int n = a.rowSize();
 	bool good = false;
 	for (int i = 0; i < n; i++) {
 		float sum = 0.f;
@@ -63,7 +62,7 @@ bool isWeakDominant(Matrix& a) {
 int pivotOnDiagonal(Matrix& a, std::vector<float>& b, int diagonal) {
   int highest = diagonal;
   float maxVal = std::fabs(a[diagonal][diagonal]);
-  for(int i = diagonal + 1; i < a.getRow(); i++) {
+  for(int i = diagonal + 1; i < a.rowSize(); i++) {
     auto absVal = std::fabs(a[i][diagonal]);
     if(absVal > maxVal) {
       maxVal = absVal;
@@ -76,14 +75,18 @@ int pivotOnDiagonal(Matrix& a, std::vector<float>& b, int diagonal) {
 void swapRows(Matrix& a, std::vector<float>& b, int rowIndex1, int rowIndex2) {
   if(rowIndex1 == rowIndex2) return;
   std::swap(b[rowIndex1], b[rowIndex2]);
-  std::swap_ranges(a[rowIndex1], a[rowIndex1] + a.getCol(), a[rowIndex2]);
+  std::swap_ranges(a[rowIndex1], a[rowIndex1] + a.colSize(), a[rowIndex2]);
 }
 
 void gaussEliminateToUpper(Matrix& a, std::vector<float>& b) {
-	int n = a.getRow();
+	int n = a.rowSize();
 	for (int i = 0; i < n - 1; i++) {
     int highest = pivotOnDiagonal(a, b, i);
     swapRows(a, b, i, highest);
+    if(std::fabs(a[i][i]) <= 1e-5) {
+      std::printf("well, 0");
+      throw std::exception();
+    }
 		for (int j = i + 1; j < n; j++) {
 			float m = a[j][i] / a[i][i];
 			b[j] -= b[i] * m;
@@ -96,7 +99,7 @@ void gaussEliminateToUpper(Matrix& a, std::vector<float>& b) {
 
 // obliczanie zmiennych:
 std::vector<float> solveUpper(Matrix& a, std::vector<float>& b) {
-	int n = a.getRow();
+	int n = a.rowSize();
 	std::vector<float> x(n);
 
 	for (int i = n - 1; i >= 0; i--) {
@@ -110,7 +113,7 @@ std::vector<float> solveUpper(Matrix& a, std::vector<float>& b) {
 }
 
 std::vector<float> solveByJacobi(Matrix a, std::vector<float> b, int iters) {
-	int n = a.getRow();
+	int n = a.rowSize();
 	std::vector<float> x(n, 0.f);
 
 	std::vector<float> d(n);
@@ -169,22 +172,27 @@ std::pair<Matrix, std::vector<float>> loadMatrixWithVector(const std::string& fi
 }
 
 void gauss() {
-  auto [m, b] = loadMatrixWithVector("test3.txt");
-	std::printf("Macierz %ix%i:\n", m.getRow(), m.getRow());
+  auto [m, b] = loadMatrixWithVector("test5.txt");
+	std::printf("Macierz %ix%i:\n", m.rowSize(), m.rowSize());
 	print(m);
 	std::printf("Wektor wyr. wolnych:\n");
 	print(b);
 
-  gaussEliminateToUpper(m, b);
+  try {
+    gaussEliminateToUpper(m, b);
+    print(m);
+  } catch(std::exception& e) {
+    std::printf("%s\n", e.what());
+  }
   auto x = solveUpper(m, b);
 	std::printf("Wynik:\n");
 	print(x);
 }
 
 void jacobi() {
-  auto [m, b] = loadMatrixWithVector("test2.txt");
+  auto [m, b] = loadMatrixWithVector("test4.txt");
 
-	std::printf("Macierz %ix%i:\n", m.getRow(), m.getRow());
+	std::printf("Macierz %ix%i:\n", m.rowSize(), m.rowSize());
 	print(m);
 	std::printf("Wektor wyr. wolnych:\n");
 	print(b);
