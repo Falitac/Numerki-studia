@@ -172,7 +172,7 @@ std::pair<Matrix, std::vector<float>> loadMatrixWithVector(const std::string& fi
 }
 
 void gauss() {
-  auto [m, b] = loadMatrixWithVector("test5.txt");
+  auto [m, b] = loadMatrixWithVector("test4.txt");
 	std::printf("Macierz %ix%i:\n", m.rowSize(), m.rowSize());
 	print(m);
 	std::printf("Wektor wyr. wolnych:\n");
