@@ -8,7 +8,6 @@ struct Point {
 	double y;
 };
 
-
 std::vector<Point> loadPoints(const std::string& path) {
 	std::fstream input(path);
 	int n;
@@ -49,42 +48,62 @@ void printVec(std::vector<double>& vec, int n) {
 }
 
 double newton(std::vector<Point>& points, double x) {
-	std::vector<double> quotients(points.size() * points.size(), 0.0);
-	double result = 0.0;
-	for (int i = 0; i < quotients.size(); i++) {
-		quotients[i] = points[i].y;
-	}
+	double result = points[0].y;
+	double p = 1.0;
+	std::printf("b0: %f\n", result);
 	for (int i = 1; i < points.size(); i++) {
-		for (int j = 0; j < points.size() - i; j++) {
-			double up = (quotients[points.size() * (i - 1) + j + 1] - quotients[points.size() * (i - 1) + j]);
-			double down = points[j + 1].x - points[j].x;
-			quotients[points.size() * i + j] = up / down;
+		double b = 0.;
+		for (int j = 0; j <= i; j++) {
+			double den = points[j].y;
+			for (int k = 0; k <= i; k++) {
+				if (k == j) {
+					continue;
+				}
+				den /= (points[j].x - points[k].x);
+			}
+			b += den;
 		}
+		p *= x - points[i - 1].x;
+		std::printf("b%i: %f\n", i, b);
+		result += b * p;
 	}
-	printVec(quotients, points.size());
-
 	return result;
 }
+
+double newton2(std::vector<Point>& points, double x) {
+	double result = 0.0;
+	int n = points.size();
+	std::vector<double> diffs(n * n, 0.);
+
+	for (int i = 0; i < n; i++) {
+		diffs[i * n] = points[i].y;
+	}
+
+	for (int i = 1; i < n; i++) {
+		for (int j = 0; j < n - i; j++) {
+			diffs[j * n + i] = diffs[(j + 1) * n + i - 1] - diffs[(j)*n + i - 1];
+			diffs[j * n + i] /= points[j + i].x - points[j].x;
+		}
+	}
+
+	for (int i = 0; i < n; i++) {
+		std::printf("b%d: %7.3f\n", i, diffs[i]);
+	}
+
+	double p = 1.0;
+	for (int i = 0; i < n; i++) {
+		result += p * diffs[i];
+		p *= x - points[i].x;
+	}
+	return result;
+}
+
 
 void printPointsInfo(const std::vector<Point>& points) {
 	std::cout << "Liczba wezlow:" << points.size() << '\n';
 	for (int i = 0; i < points.size(); i++) {
 		std::printf("%i: %.4f %.4f\n", i, points[i].x, points[i].y);
 	}
-}
-
-int main1(int argc, char** argv) {
-	auto points = loadPoints("data0.txt");
-	printPointsInfo(points);
-
-	std::cout << "Podaj punkt (argument): ";
-	double x;
-	std::cin >> x;
-	double y = langrange(points, x);
-
-	std::printf("L(%lf) = %lf", x, y);
-
-	return 0;
 }
 
 int main(int argc, char** argv) {
@@ -94,9 +113,19 @@ int main(int argc, char** argv) {
 	std::cout << "Podaj punkt (argument): ";
 	double x;
 	std::cin >> x;
-	double y = newton(points, x);
 
-	std::printf("W(%lf) = %lf", x, y);
+	std::cout << "Metoda? (L, N, domyślnie langrange'a)\n";
+	char choose = 'L';
+	std::cin >> choose;
+
+	if (choose == 'N') {
+		double y = newton(points, x);
+		std::printf("W(%lf) = %lf", x, y);
+		return 0;
+	}
+	double y = langrange(points, x);
+	std::printf("L(%lf) = %lf", x, y);
 
 	return 0;
 }
+
