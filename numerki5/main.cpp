@@ -57,7 +57,7 @@ double integrateGaLageMethod(auto foo, double a, double b, std::vector<Node>& no
 	return result;
 }
 
-void proceedFunction(auto foo, double a, double b, int iters = 5) {
+void proceedFunction(auto foo, double a, double b, int iters = 4) {
 	auto res1 = integrateRectMethod(foo, a, b, iters);
 	auto res2 = integrateTrapMethod(foo, a, b, iters);
 	auto res3 = integrateSimpMethod(foo, a, b, iters);
@@ -89,6 +89,7 @@ int main(int argc, char** argv) {
 		{ 0.861136, 0.347855},
 	};
 
+	std::cout << "Ilosc przedzialow: 4\n";
 	std::cout << "f(x) = sin(x), 0.5 <= x <= 2.5\n";
 	proceedFunction(foo1, .5, 2.5);
 
