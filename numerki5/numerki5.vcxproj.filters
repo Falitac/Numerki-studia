@@ -16,7 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>Pliki nagłówkowe</Filter>
+      <Filter>Pliki zasobów</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

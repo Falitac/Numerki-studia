@@ -57,26 +57,14 @@ double integrateGaLageMethod(auto foo, double a, double b, std::vector<Node>& no
 	return result;
 }
 
-void proceedFunction(auto foo, double a, double b) {
-	std::vector<Node> nodes0 = {
-		{-0.57735, 1.},
-		{ 0.57735, 1.},
-	};
-	std::vector<Node> nodes1 = {
-		{-0.861136, 0.347855},
-		{-0.339981, 0.652145},
-		{ 0.339981, 0.652145},
-		{ 0.861136, 0.347855},
-	};
-	auto res1 = integrateRectMethod(foo, a, b, 4);
-	auto res2 = integrateTrapMethod(foo, a, b, 4);
-	auto res3 = integrateSimpMethod(foo, a, b, 4);
-	auto res4 = integrateGaLageMethod(foo, a, b, nodes1);
+void proceedFunction(auto foo, double a, double b, int iters = 5) {
+	auto res1 = integrateRectMethod(foo, a, b, iters);
+	auto res2 = integrateTrapMethod(foo, a, b, iters);
+	auto res3 = integrateSimpMethod(foo, a, b, iters);
 
-	std::cout << std::format("Metoda prostakatow: {:.4f}\n", res1);
-	std::cout << std::format("Metoda trapezow: {:.4f}\n", res2);
-	std::cout << std::format("Metoda Simpsona: {:.4f}\n", res3);
-	std::cout << std::format("Metoda Gaussa-Lagendre'a: {:.8f}\n", res4);
+	std::printf("Metoda prostakatow: %.8f\n", res1);
+	std::printf("Metoda trapezow:    %.8f\n", res2);
+	std::printf("Metoda Simpsona:    %.8f\n", res3);
 }
 
 int main(int argc, char** argv) {
@@ -90,14 +78,32 @@ int main(int argc, char** argv) {
 		return std::exp(x);
 	};
 
+	std::vector<Node> nodes0 = {
+		{-0.57735, 1.},
+		{ 0.57735, 1.},
+	};
+	std::vector<Node> nodes1 = {
+		{-0.861136, 0.347855},
+		{-0.339981, 0.652145},
+		{ 0.339981, 0.652145},
+		{ 0.861136, 0.347855},
+	};
+
 	std::cout << "f(x) = sin(x), 0.5 <= x <= 2.5\n";
 	proceedFunction(foo1, .5, 2.5);
+
+	auto resGaLage1 = integrateGaLageMethod(foo1, .5, 2.5, nodes0);
+	auto resGaLage2 = integrateGaLageMethod(foo1, .5, 2.5, nodes1);
+
+	printf("Metoda Gaussa-Legendre'a (2 wezly): %.8f\n", resGaLage1);
+	printf("Metoda Gaussa-Legendre'a (4 wezly): %.8f\n", resGaLage2);
 
 	std::cout << "f(x) = x^2 + 2x + 5, 0.5 <= x <= 5\n";
 	proceedFunction(foo2, .5, 5);
 
-	std::cout << "f(x) = exp(x), 0.5 <= x <= 2.5\n";
+	std::cout << "f(x) = exp(x), 0.5 <= x <= 5\n";
 	proceedFunction(foo3, .5, 5);
+
 
 	return 0;
 }
